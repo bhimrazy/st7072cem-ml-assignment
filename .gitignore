@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+.ruff_cache/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# macOS
+.DS_Store
+
+# Raw API responses from the optional weather and elevation pulls (rebuildable)
+data/cache/
+
+# Trained models (about 140 MB), rebuilt by notebooks/04-classification.ipynb
+data/processed/models/
+
+# LaTeX build files (paper/main.pdf is kept)
+*.aux
+*.bbl
+*.blg
+*.log
+*.out
+*.synctex.gz
+*.fls
+*.fdb_latexmk

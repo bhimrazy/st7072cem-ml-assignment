@@ -1,0 +1,32 @@
+[project]
+name = "monsoon-hazard-prediction"
+version = "0.1.0"
+description = "District-day forecasting of damaging monsoon hazard incidents in Nepal (MSc ML coursework)"
+requires-python = ">=3.12,<3.13"
+dependencies = [
+    "pandas==3.0.6",
+    "numpy==2.5.3",
+    "scikit-learn==1.9.1",
+    "matplotlib==3.11.2",
+    "pyarrow==26.0.0",
+    "requests==2.34.2",
+    "jupyter==1.1.1",
+    "shap==0.53.0",
+    "geopandas>=1.2.0",
+    "seaborn>=0.13.2",
+]
+
+[tool.uv]
+package = false
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+extend-include = ["*.ipynb"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F", "I"]
+
+[tool.ruff.lint.per-file-ignores]
+# Notebooks add the repository root to sys.path before importing src.
+"*.ipynb" = ["E402"]
