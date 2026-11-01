@@ -1,0 +1,38 @@
+\begin{tabular}{p{0.9cm}p{3.0cm}p{3.55cm}}
+\toprule
+Group & Feature & Definition \\
+\midrule
+Rain (A) & \texttt{rain\_1d} & ERA5 precipitation on day $t$ (mm) \\
+ & \texttt{rain\_3d} & Sum over $t-2$ to $t$ (mm) \\
+ & \texttt{rain\_7d} & Sum over 7 days (mm) \\
+ & \texttt{rain\_14d} & Sum over 14 days (mm) \\
+ & \texttt{rain\_30d} & Sum over 30 days (mm) \\
+ & \texttt{rain\_api} & Antecedent precipitation index, decay 0.9 \\
+ & \texttt{rain\_hours\_1d} & Hours with precipitation on day $t$ \\
+ & \texttt{tmax\_1d} & Maximum 2 m temperature on day $t$ (\textdegree C) \\
+ & \texttt{rain\_3d\_pct} & Percentile of the 3-day sum in the district's 2017 to 2022 distribution \\
+Season & \texttt{doy\_sin} & Day of year, sine \\
+ & \texttt{doy\_cos} & Day of year, cosine \\
+ & \texttt{month} & Calendar month \\
+Terrain & \texttt{elev\_mean} & Mean ward elevation (m) \\
+ & \texttt{elev\_relief} & Ward elevation range (m) \\
+ & \texttt{share\_above\_1000m} & Share of wards above 1,000 m \\
+ & \texttt{share\_above\_3000m} & Share of wards above 3,000 m \\
+Recent incidents & \texttt{recent\_dam\_3d} & Damaging incidents known at $t$, dated $t-3$ to $t$ \\
+ & \texttt{recent\_dam\_7d} & Same, $t-7$ to $t$ \\
+ & \texttt{nbr\_recent\_dam\_3d} & Same as recent\_dam\_3d, summed over neighbouring districts \\
+ & \texttt{nbr\_recent\_dam\_7d} & Same, 7 days \\
+ & \texttt{recent\_flood\_7d} & Flood incidents, 7 days \\
+ & \texttt{recent\_landslide\_7d} & Landslide incidents, 7 days \\
+ & \texttt{recent\_heavy\_rain\_7d} & Heavy-rainfall incidents, 7 days \\
+ & \texttt{recent\_lightning\_7d} & Lightning incidents, 7 days \\
+History & \texttt{te\_dam} & District $\times$ month rate of damaging days (shrunk, leave-one-season-out) \\
+ & \texttt{te\_flood} & Same, flood \\
+ & \texttt{te\_landslide} & Same, landslide \\
+ & \texttt{te\_heavy\_rain} & Same, heavy rainfall \\
+ & \texttt{te\_lightning} & Same, lightning \\
+Future rain (B) & \texttt{future\_rain\_3d} & Observed ERA5 rain, $t+1$ to $t+3$ (mm); set B only \\
+ & \texttt{future\_rain\_max\_1d} & Maximum daily rain, $t+1$ to $t+3$; set B only \\
+ & \texttt{future\_rain\_hours\_3d} & Rain hours, $t+1$ to $t+3$; set B only \\
+\bottomrule
+\end{tabular}

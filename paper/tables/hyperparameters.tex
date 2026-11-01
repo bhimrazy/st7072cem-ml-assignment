@@ -1,0 +1,11 @@
+\begin{tabular}{p{0.8cm}p{3.0cm}p{1.95cm}r}
+\toprule
+Model & Grid and fixed settings & Chosen & Fold PR-AUC \\
+\midrule
+LR & C $\in$ \{0.01, 0.1, 1.0\};\newline L2, class weight balanced, standardised inputs & C = 0.01 & 0.136 \\
+RF & min\_samples\_leaf $\in$ \{20, 100\};\newline max\_features $\in$ \{sqrt, 0.5\};\newline 300 trees, class weight balanced-subsample & min\_samples\_leaf = 20, max\_features = sqrt & 0.150 \\
+HGB & learning\_rate $\in$ \{0.03, 0.1\};\newline max\_leaf\_nodes $\in$ \{15, 31\};\newline 300 iterations, min leaf 50, L2 1.0, class weight balanced & learning\_rate = 0.03, max\_leaf\_nodes = 15 & 0.148 \\
+SVM-L & C $\in$ \{0.001, 0.01, 0.1\};\newline LinearSVC, class weight balanced, standardised & C = 0.1 & 0.135 \\
+SVM-RBF & C $\in$ \{0.3, 1.0\};\newline gamma $\in$ \{scale\};\newline RBF, $\gamma$ = scale, 12,000-row stratified subsample & C = 0.3, gamma = scale & 0.118 \\
+\bottomrule
+\end{tabular}
