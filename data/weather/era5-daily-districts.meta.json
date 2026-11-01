@@ -1,0 +1,21 @@
+{
+  "source": "Open-Meteo historical weather API, ERA5 (CC BY 4.0, attribution to Open-Meteo)",
+  "url": "https://archive-api.open-meteo.com/v1/archive",
+  "models": "era5",
+  "timezone": "Asia/Kathmandu",
+  "daily": [
+    "precipitation_sum",
+    "rain_sum",
+    "precipitation_hours",
+    "temperature_2m_max",
+    "temperature_2m_mean"
+  ],
+  "dropped_all_null": [],
+  "points": "BIPAD district centroids (data/raw/bipad-districts.json)",
+  "span": "2 March to 31 October per season, 2016 to 2026 (2026 to 31 August)",
+  "requests_cached": 847,
+  "requests_total": 847,
+  "rows": 201971,
+  "pulled_from": "2026-10-10",
+  "pulled_to": "2026-10-10"
+}
