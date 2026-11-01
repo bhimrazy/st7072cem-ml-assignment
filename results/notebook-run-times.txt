@@ -1,0 +1,21 @@
+01-data-preparation  exit=0  seconds=4  finished=2026-10-10 20:13:57
+02-exploratory-analysis  exit=0  seconds=4  finished=2026-10-10 20:14:01
+03-clustering-risk-regions  exit=0  seconds=10  finished=2026-10-10 20:14:11
+04-classification  exit=0  seconds=871  finished=2026-10-10 20:28:42
+05-evaluation-and-interpretation  exit=0  seconds=404  finished=2026-10-10 20:35:26
+02-exploratory-analysis  exit=0  seconds=4  finished=2026-10-10 20:35:51  (re-run for the muted figures)
+03-clustering-risk-regions  exit=0  seconds=11  finished=2026-10-10 20:36:02  (re-run for the muted figures)
+02-exploratory-analysis  exit=0  seconds=4  finished=2026-10-10 20:36:57  (re-run, annotation moved)
+03-clustering-risk-regions  exit=0  seconds=11  finished=2026-10-10 20:44:28  (re-run, single-column figures)
+03-clustering-risk-regions  exit=0  seconds=11  finished=2026-10-10 20:46:14  (re-run, shared legend)
+03-clustering-risk-regions  exit=0  seconds=11  finished=2026-10-10 20:46:58  (re-run, profile panel markers)
+03-clustering-risk-regions  exit=0  seconds=12  finished=2026-10-10 20:47:21  (re-run, profile panel markers)
+05-evaluation-and-interpretation  exit=0  seconds=405  finished=2026-10-10 20:51:13  (re-run, single-column figures)
+05-evaluation-and-interpretation  exit=0  seconds=1360  finished=2026-10-10 21:16:05  (re-run, Fig. 4 and Fig. 6 spacing)
+05-evaluation-and-interpretation  exit=0  seconds=219  finished=2026-10-27 14:50:29  (cells 1, 14 and 15 only: section 5 sensitivity checks)
+02-exploratory-analysis  exit=0  seconds=5  finished=2026-10-27 14:57:18  (re-run, ecological belt label)
+01-data-preparation  exit=0  seconds=9  finished=2026-11-01 13:56:21  (clean rerun, standalone repository)
+02-exploratory-analysis  exit=0  seconds=17  finished=2026-11-01 13:56:39  (clean rerun, standalone repository)
+03-clustering-risk-regions  exit=0  seconds=11  finished=2026-11-01 13:56:50  (clean rerun, standalone repository)
+04-classification  exit=0  seconds=980  finished=2026-11-01 14:13:10  (clean rerun, standalone repository)
+05-evaluation-and-interpretation  exit=0  seconds=628  finished=2026-11-01 14:23:37  (clean rerun, standalone repository)

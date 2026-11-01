@@ -1,0 +1,5 @@
+split,rows,positives,rate,seasons,y_rain_rate,y_fatal_rate,y_flood_rate,y_landslide_rate,y_heavy_rain_rate,y_lightning_rate
+train,97482,6482,6.65,"2017, 2018, 2019, 2020, 2021, 2022",4.26,2.74,0.96,2.22,1.6,2.5
+validate,16247,722,4.44,2023,2.57,1.45,0.39,1.33,0.97,1.91
+test,32494,2749,8.46,"2024, 2025",5.49,2.78,1.44,2.55,2.23,3.24
+check,10626,614,5.78,2026,3.39,2.08,0.87,1.6,1.09,2.48

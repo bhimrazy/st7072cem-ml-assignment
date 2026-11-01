@@ -1,0 +1,4 @@
+ranking,positives,hits_top4,hits_top10,hits_top20,pr_auc_day
+set A,42,3,6,9,0.579
+set B,42,3,8,15,0.771
+climatology,42,2,4,11,0.595

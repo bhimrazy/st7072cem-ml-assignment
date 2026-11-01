@@ -1,0 +1,6 @@
+model,params,loso_mean_pr_auc
+lr,"{""C"": 0.01}",0.1363
+rf,"{""min_samples_leaf"": 20, ""max_features"": ""sqrt""}",0.1499
+hgb,"{""learning_rate"": 0.03, ""max_leaf_nodes"": 15}",0.1475
+svm_linear,"{""C"": 0.1}",0.135
+svm_rbf,"{""C"": 0.3, ""gamma"": ""scale""}",0.1175

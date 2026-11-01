@@ -1,0 +1,4 @@
+method,k,boot_ari_mean,boot_ari_q05,boot_ari_q95,ari_vs_belts,ari_vs_provinces
+kmeans,6,0.549,0.366,0.729,0.241,0.223
+ward,6,0.472,0.302,0.653,0.225,0.244
+gmm,6,0.215,0.049,0.461,0.249,0.216

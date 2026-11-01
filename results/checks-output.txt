@@ -1,0 +1,14 @@
+panel (156849, 20), incidents (16790, 8), terrain (77, 5)
+ok  panel reproduces the reference numbers
+ok  feature lists: no loss_*/target columns, set A has no future_*, NOWX has no weather
+ok  no loss_* columns in panel or incidents table
+ok  set A unchanged when the future is scrambled
+  259 recent-incident window counts recomputed by hand
+ok  entry-lag rule: known-at-t counts, synthetic pre-2020 lags
+ok  percentiles and target encoding use training seasons only
+ok  leave-one-season-out target encoding for training rows
+ok  persistence baseline uses known-at-t incidents only
+  real ERA5 coverage of panel rows: 100.00%
+  real ERA5 rain features on cached seasons: (171710, 14), mean 7-day rain 71.2 mm
+ok  real-weather smoke test
+all checks passed

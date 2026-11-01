@@ -1,0 +1,7 @@
+region,districts,elev_mean_m,rain_mm_per_day,rain_jul_aug_mm_per_day,damaging_flood_pct,damaging_landslide_pct,damaging_heavy_rain_pct,damaging_lightning_pct,y_rate_train_pct,y_rate_test_pct,belts
+0,9,463.29,9.12,15.98,0.84,0.42,0.35,2.2,9.58,9.22,"Terai 5, Hill 4"
+1,6,1719.74,19.24,30.61,0.22,1.33,0.45,1.03,7.68,10.7,"Hill 3, Mountain 3"
+2,12,164.45,7.23,13.27,0.59,0.05,1.37,0.62,6.04,6.97,Terai 12
+3,20,2013.18,6.99,13.5,0.21,0.79,0.52,0.55,5.16,8.96,"Mountain 12, Hill 6, Terai 2"
+4,23,1466.93,13.15,23.09,0.25,0.91,0.43,0.67,5.85,7.57,"Hill 19, Mountain 3, Terai 1"
+5,7,1371.42,10.58,18.82,0.47,1.88,0.49,1.15,9.93,9.61,"Hill 5, Terai 1, Mountain 1"
