@@ -1,0 +1,7 @@
+{
+  "source": "Open-Meteo elevation API (Copernicus DEM GLO-90), CC BY 4.0",
+  "url": "https://api.open-meteo.com/v1/elevation",
+  "points": "BIPAD ward centroids",
+  "requests": 69,
+  "pulled_on": "2026-10-10"
+}

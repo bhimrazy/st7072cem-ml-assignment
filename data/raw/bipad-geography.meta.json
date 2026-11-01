@@ -1,0 +1,30 @@
+{
+  "source": "BIPAD portal, NDRRMA, Government of Nepal",
+  "files": {
+    "bipad-incident-wards.json": {
+      "url": "https://bipadportal.gov.np/api/v1/incident/?format=json&limit=100000&fields=id,wards",
+      "pulled_at_utc": "2026-10-10T05:47:25+00:00",
+      "records": 64658,
+      "bytes": 1793405
+    },
+    "bipad-wards.json": {
+      "url": "https://bipadportal.gov.np/api/v1/ward/?format=json&limit=10000",
+      "pulled_at_utc": "2026-10-10T05:47:27+00:00",
+      "records": 6803,
+      "bytes": 1400018
+    },
+    "bipad-municipalities.json": {
+      "url": "https://bipadportal.gov.np/api/v1/municipality/?format=json&limit=10000",
+      "pulled_at_utc": "2026-10-10T05:47:28+00:00",
+      "records": 774,
+      "bytes": 252773
+    },
+    "bipad-districts.json": {
+      "url": "https://bipadportal.gov.np/api/v1/district/?format=json&limit=100",
+      "pulled_at_utc": "2026-10-10T05:47:28+00:00",
+      "records": 77,
+      "bytes": 22045
+    }
+  },
+  "note": "Frozen on first build; never refreshed so the district link cannot drift with the live API."
+}

@@ -1,0 +1,16 @@
+{
+  "source": "OCHA / HDX, Nepal subnational administrative boundaries (COD-AB)",
+  "url": "https://data.humdata.org/dataset/cod-ab-npl",
+  "version": "v02 (valid_on 2024-03-14)",
+  "licence": "CC BY-IGO",
+  "downloaded": "2026-10-10",
+  "layers": {
+    "npl-districts-adm2.geojson": "npl_admin2, 77 districts",
+    "npl-provinces-adm1.geojson": "npl_admin1, 7 provinces"
+  },
+  "simplification": "shapely simplify, tolerance 0.0015 degrees (about 150 m), topology preserved",
+  "name_mapping": {
+    "Chitawan (HDX)": "Chitwan (BIPAD)"
+  },
+  "note": "all 77 district names match BIPAD after the mapping"
+}

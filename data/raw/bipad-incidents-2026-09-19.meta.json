@@ -1,0 +1,11 @@
+{
+  "source": "BIPAD portal, NDRRMA, Government of Nepal",
+  "endpoint": "https://bipadportal.gov.np/api/v1/incident/?format=json&limit=100000&expand=loss",
+  "pulled_on": "2026-09-19",
+  "pulled_at_utc": "2026-09-19T14:14:20.063108+00:00",
+  "record_count": 63549,
+  "column_count": 67,
+  "hazard_type_count": 47,
+  "authentication": "none",
+  "note": "Live API; contents drift. Analysis should cite this snapshot date."
+}
