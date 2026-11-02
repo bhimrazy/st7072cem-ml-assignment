@@ -3,10 +3,13 @@
     uv run python -m src.tables
 
 Every number in the paper's tables comes from here, so the tables cannot drift from the results.
-Output goes to paper/tables/*.tex and is \\input by paper/main.tex.
+Output goes to paper/tables/*.tex and is \\input by paper/main.tex. The main results come from the
+expanding-window run (results/rolling-origin*.csv, the rolling-* tables); the diagnostic tables
+come from the fixed-split model of notebooks 04 and 05.
 """
 
 import json
+import re
 
 import pandas as pd
 
@@ -83,6 +86,8 @@ def ci(df, col, digits=3):
 
 
 def write(name, body):
+    # A leading hyphen prints as a hyphen in text mode; set negative numbers with a math minus.
+    body = re.sub(r"(?<=[\s(\[])-(?=\d)", "$-$", body)
     OUT.mkdir(parents=True, exist_ok=True)
     (OUT / f"{name}.tex").write_text(body)
 
@@ -440,19 +445,170 @@ def table_budget_counts():
     write("budget-counts", "\n".join(lines) + "\n")
 
 
-def table_run_times():
-    """The clean run of the five notebooks: the first five lines of results/notebook-run-times.txt."""
+# ---------- expanding-window (rolling-origin) evaluation, the paper's main design ----------
+
+ROLL_START = 2017  # training start of the main rolling run; start 2020 is a sensitivity
+ROLL_MODELS = ["lr", "rf", "hgb", "svm_linear", "svm_rbf"]
+
+
+def rolling(name="rolling-origin"):
+    """Rows of results/<name>.csv for the main training start."""
+    t = pd.read_csv(C.RESULTS / f"{name}.csv")
+    return t[t["start"] == ROLL_START].drop(columns="start")
+
+
+def table_rolling_schedule():
+    """Each scored season, the seasons its model is fitted on, and both row counts and rates."""
+    s = pd.read_csv(C.RESULTS / "eda-rates-per-year.csv", index_col=0)
+    chk = pd.read_csv(C.RESULTS / "eda-class-balance.csv", index_col=0).loc["check"]
     lines = [
-        "\\begin{tabular}{lrrl}",
+        "\\begin{tabular}{llrrrrr}",
         "\\toprule",
-        "Notebook & Exit & Seconds & Finished \\\\",
+        " & & \\multicolumn{2}{c}{Training} & \\multicolumn{3}{c}{Scored} \\\\",
+        "\\cmidrule(lr){3-4}\\cmidrule(lr){5-7}",
+        "Scored & Fitted on & Rows & $y$ (\\%) & Rows & Pos. & $y$ (\\%) \\\\",
+        "\\midrule",
+    ]
+    for origin in (2024, 2025, C.CHECK_SEASON):
+        tr = s.loc[ROLL_START : origin - 1]
+        rows, pos = tr["rows"].sum(), tr["positives"].sum()
+        if origin == C.CHECK_SEASON:
+            lead, n, p = "2026 check", int(chk["rows"]), int(chk["positives"])
+        else:
+            lead, n, p = str(origin), int(s.loc[origin, "rows"]), int(s.loc[origin, "positives"])
+        lines.append(
+            f"{lead} & {ROLL_START}--{origin - 1} & {rows:,} & {100 * pos / rows:.2f} & {n:,} & {p:,} & {100 * p / n:.2f} \\\\"
+        )
+        if origin == 2025:
+            n = int(s.loc[[2024, 2025], "rows"].sum())
+            p = int(s.loc[[2024, 2025], "positives"].sum())
+            lines.append(
+                f"2024--25 & per season & & & {n:,} & {p:,} & {100 * p / n:.2f} \\\\\\addlinespace[2pt]"
+            )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    write("rolling-schedule", "\n".join(lines) + "\n")
+
+
+def table_rolling_main():
+    """Pooled 2024 to 2025: (i) PR-AUC with paired differences, (ii) BSS, ROC-AUC and the 5% budget."""
+    m = rolling().query("scope == 'test_2024_2025'").set_index("model")
+    b = pd.read_csv(C.RESULTS / "rolling-origin-baselines.csv", index_col=0)
+    assert abs(b.loc["climatology", "pr_auc"] - m.loc["climatology", "pr_auc"]) < 1e-12
+
+    def row(lab, t, k):
+        r = t.loc[k]
+        d = (
+            ""
+            if k == "climatology"
+            else f"{r['pr_auc_diff_vs_ref']:+.3f} [{r['pr_auc_diff_lo']:+.3f}, {r['pr_auc_diff_hi']:+.3f}]"
+        )
+        return f"{lab} & {ci(t.loc[[k]], 'pr_auc')[0]} & {d} \\\\"
+
+    li = [
+        "\\begin{tabular}{lll}",
+        "\\toprule",
+        "Model & PR-AUC [95\\% CI] & $\\Delta$ vs Clim. [95\\% CI] \\\\",
+        "\\midrule",
+        "\\multicolumn{3}{l}{\\textit{Baselines}} \\\\",
+    ]
+    li += [
+        row(SHORT[k], b, k)
+        for k in ["climatology", "persistence", "dahal_threshold", "refit_threshold"]
+    ]
+    li.append("\\midrule\\multicolumn{3}{l}{\\textit{Models, set A (known at $t$)}} \\\\")
+    li += [row(SHORT[k], m, k) for k in ROLL_MODELS]
+    li.append("\\midrule\\multicolumn{3}{l}{\\textit{Perfect-forecast ceiling}} \\\\")
+    li.append(row("LR, set B", m, "lr_B"))
+    li += ["\\bottomrule", "\\end{tabular}"]
+    write("rolling-main-results", "\n".join(li) + "\n")
+    li = [
+        "\\begin{tabular}{llrrrr}",
+        "\\toprule",
+        "Model & BSS [95\\% CI] & ROC & POD & FAR & CSI \\\\",
+        "\\midrule",
+    ]
+    for k in ["climatology"] + ROLL_MODELS + ["lr_B"]:
+        r = m.loc[k]
+        lab = "LR, set B" if k == "lr_B" else SHORT[k]
+        bss = "" if k == "climatology" else ci(m.loc[[k]], "bss")[0]
+        li.append(
+            f"{lab} & {bss} & {r['roc_auc']:.3f} & {r['pod']:.3f} & {r['far']:.3f} & {r['csi']:.3f} \\\\"
+        )
+        if k in ("climatology", ROLL_MODELS[-1]):
+            li.append("\\midrule")
+    li += ["\\bottomrule", "\\end{tabular}"]
+    write("rolling-main-results-ops", "\n".join(li) + "\n")
+
+
+def table_rolling_seasons():
+    """PR-AUC per scored season (2026 is the check) with the paired difference from climatology."""
+    s = rolling("rolling-origin-per-season")
+    seasons = [2024, 2025, C.CHECK_SEASON]
+    get = {x: s[s["season"] == x].set_index("model") for x in seasons}
+    lines = [
+        "\\begin{tabular}{llll}",
+        "\\toprule",
+        "Model & 2024 & 2025 & 2026 check \\\\",
+        "\\midrule",
+        "Fitted on & " + " & ".join(f"{ROLL_START}--{str(x - 1)[2:]}" for x in seasons) + " \\\\",
+        "Base rate & "
+        + " & ".join(f"{get[x].loc['climatology', 'base_rate']:.3f}" for x in seasons)
+        + " \\\\",
+        "Clim. & "
+        + " & ".join(f"{get[x].loc['climatology', 'pr_auc']:.3f}" for x in seasons)
+        + " \\\\",
+        "\\midrule",
+    ]
+    for k in ROLL_MODELS + ["lr_B"]:
+        cells = []
+        for x in seasons:
+            r = get[x].loc[k]
+            star = "$^{*}$" if r["pr_auc_diff_lo"] > 0 or r["pr_auc_diff_hi"] < 0 else ""
+            d = round(r["pr_auc_diff_vs_ref"], 3) + 0.0  # + 0.0 turns -0.0 into 0.0
+            cells.append(f"{r['pr_auc']:.3f} ({d:+.3f}){star}")
+        lab = "LR, set B" if k == "lr_B" else SHORT[k]
+        if k == "lr_B":
+            lines.append("\\midrule")
+        lines.append(f"{lab} & " + " & ".join(cells) + " \\\\")
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    write("rolling-per-season", "\n".join(lines) + "\n")
+
+
+def table_rolling_budget_counts():
+    """Alert outcomes at the 5% budget on pooled 2024 to 2025, from n, positives, POD and alert rate."""
+    m = rolling().query("scope == 'test_2024_2025'").set_index("model")
+    lines = [
+        "\\begin{tabular}{lrrrr}",
+        "\\toprule",
+        "Model & Hits & False alarms & Misses & Correct neg. \\\\",
+        "\\midrule",
+    ]
+    for k in ["climatology"] + ROLL_MODELS + ["lr_B"]:
+        r = m.loc[k]
+        n, pos = int(r["n"]), int(r["positives"])
+        alerts, hits = round(r["alert_rate"] * n), round(r["pod"] * pos)
+        fa = alerts - hits
+        assert abs(r["pod"] * pos - hits) < 1e-6 and abs(r["far"] * alerts - fa) < 1e-6, k
+        lab = "LR, set B" if k == "lr_B" else SHORT[k]
+        lines.append(
+            f"{lab} & {hits:,} & {fa:,} & {pos - hits:,} & {n - alerts - (pos - hits):,} \\\\"
+        )
+    lines += ["\\bottomrule", "\\end{tabular}"]
+    write("rolling-budget-counts", "\n".join(lines) + "\n")
+
+
+def table_run_times():
+    """The clean run of the five notebooks, from results/notebook-run-times.txt."""
+    lines = [
+        "\\begin{tabular}{lrr}",
+        "\\toprule",
+        "Notebook & Exit & Seconds \\\\",
         "\\midrule",
     ]
     for raw in (C.RESULTS / "notebook-run-times.txt").read_text().splitlines()[:5]:
         name, *fields = raw.split()
-        f = dict(x.split("=", 1) for x in fields[:3])
-        when = f"{f['finished']} {fields[3]}"
-        lines.append(f"{name} & {f['exit']} & {f['seconds']} & {when} \\\\")
+        f = dict(x.split("=", 1) for x in fields)
+        lines.append(f"{name} & {f['exit']} & {f['seconds']} \\\\")
     lines += ["\\bottomrule", "\\end{tabular}"]
     write("run-times", "\n".join(lines) + "\n")
 
@@ -496,6 +652,10 @@ def main():
         table_budget_counts,
         table_features,
         table_run_times,
+        table_rolling_schedule,
+        table_rolling_main,
+        table_rolling_seasons,
+        table_rolling_budget_counts,
     ):
         f()
     print("tables written to", OUT, sorted(p.name for p in OUT.glob("*.tex")))

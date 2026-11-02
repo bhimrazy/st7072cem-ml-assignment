@@ -74,6 +74,17 @@ def _csi(y, alert):
     return hits / (hits + misses + fa) if hits + misses + fa else 0.0
 
 
+def budget_alerts(score, budget=C.ALERT_BUDGET, seed=C.SEED):
+    """Flag the top `budget` share of rows by score, ties at the cut ordered at random with `seed`."""
+    score = np.asarray(score, dtype=float)
+    k = int(round(budget * len(score)))
+    tie = np.random.default_rng(seed).random(len(score))
+    order = np.lexsort((tie, -score))
+    alert = np.zeros(len(score), dtype=bool)
+    alert[order[:k]] = True
+    return alert
+
+
 def alert_metrics(y, score, budget=C.ALERT_BUDGET, alert=None, seed=C.SEED):
     """POD, FAR and CSI when the top `budget` share of district-days is alerted (or a given alert flag).
 
@@ -83,12 +94,7 @@ def alert_metrics(y, score, budget=C.ALERT_BUDGET, alert=None, seed=C.SEED):
     """
     y = np.asarray(y)
     if alert is None:
-        score = np.asarray(score, dtype=float)
-        k = int(round(budget * len(score)))
-        tie = np.random.default_rng(seed).random(len(score))
-        order = np.lexsort((tie, -score))
-        alert = np.zeros(len(score), dtype=bool)
-        alert[order[:k]] = True
+        alert = budget_alerts(score, budget, seed)
     hits = np.sum(alert & (y == 1))
     misses = np.sum(~alert & (y == 1))
     fa = np.sum(alert & (y == 0))
@@ -122,6 +128,29 @@ def metrics(y, score, clim, prob=None, budget=C.ALERT_BUDGET, alert=None):
     return out
 
 
+def seasonal_metrics(y, score, clim, prob, strata, budget=C.ALERT_BUDGET):
+    """`metrics` for rows scored by separately fitted models, one per stratum (season).
+
+    Raw scores of different fits are not on one scale, so PR-AUC and ROC-AUC are the mean of the
+    per-stratum values and the alert budget is set within each stratum (POD, FAR and CSI then come
+    from the combined alerts). Brier and BSS pool the calibrated probabilities. With one stratum
+    this equals `metrics`.
+    """
+    y, score, strata = np.asarray(y), np.asarray(score, dtype=float), np.asarray(strata)
+    prob = score if prob is None else np.asarray(prob, dtype=float)
+    clim = np.asarray(clim)
+    groups = [np.flatnonzero(strata == s) for s in np.unique(strata)]
+    out = metrics(y, score, clim, prob, budget)
+    per = [metrics(y[i], score[i], clim[i], prob[i], budget) for i in groups]
+    for k in ("pr_auc", "roc_auc"):
+        out[k] = float(np.mean([r[k] for r in per]))
+    alert = np.zeros(len(y), dtype=bool)
+    for i in groups:
+        alert[i] = budget_alerts(score[i], budget)
+    out.update(alert_metrics(y, score, alert=alert))
+    return out
+
+
 def week_blocks(dates):
     """Block id per row: the ISO week, so one storm that hits many districts stays in one block."""
     d = pd.to_datetime(pd.Series(dates))
@@ -131,13 +160,15 @@ def week_blocks(dates):
 
 
 def block_bootstrap(
-    y, scores, clim, dates, n_boot=1000, seed=C.SEED, keys=("pr_auc", "bss", "csi")
+    y, scores, clim, dates, n_boot=1000, seed=C.SEED, keys=("pr_auc", "bss", "csi"), strata=None
 ):
     """Weekly block bootstrap: resample weeks with replacement, recompute metrics for every model.
 
     `scores` maps a model name to (score, prob). Returns point estimates, 2.5 and 97.5 percentiles
     per model and metric, and the same for the paired difference against the first entry of
-    `scores` (normally climatology).
+    `scores` (normally climatology). With `strata` (the season of each row), weeks are resampled
+    within each stratum and metrics come from `seasonal_metrics`; without it, all weeks form one
+    pool and metrics come from `metrics`.
     """
     rng = np.random.default_rng(seed)
     y = np.asarray(y)
@@ -148,23 +179,36 @@ def block_bootstrap(
     blocks = week_blocks(dates)
     uniq, inv = np.unique(blocks, return_inverse=True)
     members = [np.flatnonzero(inv == b) for b in range(len(uniq))]
+    if strata is None:
+        pools = [np.arange(len(uniq))]
+        score_fn = lambda yy, s, c, p, idx: metrics(yy, s, c, p)  # noqa: E731
+    else:
+        strata = np.asarray(strata)
+        block_stratum = np.array([strata[m[0]] for m in members])
+        assert all(len(np.unique(strata[m])) == 1 for m in members), "a week spans two strata"
+        pools = [np.flatnonzero(block_stratum == s) for s in np.unique(block_stratum)]
+        score_fn = lambda yy, s, c, p, idx: seasonal_metrics(yy, s, c, p, strata[idx])  # noqa: E731
     names = list(scores)
     ref = names[0]
     draws = {m: {k: [] for k in keys} for m in names}
     for _ in range(n_boot):
-        pick = rng.integers(0, len(uniq), len(uniq))
-        idx = np.concatenate([members[b] for b in pick])
-        yb, cb = y[idx], clim[idx]
-        if yb.sum() == 0:
+        parts = []
+        for pool in pools:
+            pick = pool[rng.integers(0, len(pool), len(pool))]
+            parts.append(np.concatenate([members[b] for b in pick]))
+        if any(y[p].sum() == 0 for p in parts):
             continue
+        idx = np.concatenate(parts)
+        yb, cb = y[idx], clim[idx]
         for m in names:
-            r = metrics(yb, scores[m][0][idx], cb, scores[m][1][idx])
+            r = score_fn(yb, scores[m][0][idx], cb, scores[m][1][idx], idx)
             for k in keys:
                 draws[m][k].append(r[k])
     rows = []
-    ref_point = metrics(y, scores[ref][0], clim, scores[ref][1])
+    every = np.arange(len(y))
+    ref_point = score_fn(y, scores[ref][0], clim, scores[ref][1], every)
     for m in names:
-        point = metrics(y, scores[m][0], clim, scores[m][1])
+        point = score_fn(y, scores[m][0], clim, scores[m][1], every)
         for k in keys:
             a = np.asarray(draws[m][k])
             d = a - np.asarray(draws[ref][k])

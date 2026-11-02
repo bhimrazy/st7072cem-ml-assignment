@@ -5,7 +5,7 @@ The coursework paper in the IEEE conference template (`IEEEtran`), with a 6,000-
 | File | What it is |
 |---|---|
 | `main.tex` | Paper source; `main.pdf` is the compiled paper |
-| `references.bib` | Reference list (76 entries); BibTeX prints only the cited ones |
+| `references.bib` | Reference list (84 entries); BibTeX prints only the cited ones (80) |
 | `tables/` | LaTeX tables generated from `../results/` by `uv run python -m src.tables` |
 | `figures/` | Figures (vector PDF and 300 dpi PNG), written by the notebooks in `../notebooks/` |
 

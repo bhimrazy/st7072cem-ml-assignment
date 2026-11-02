@@ -262,3 +262,134 @@ def categorical_map(ax, labels, colours, names=None, legend_loc="upper right", t
         borderpad=0.4,
     )
     return g
+
+
+# ---------- expanding-window (rolling-origin) figure ----------
+
+
+def rolling_pr_reliability_budget(start=2017, best="rf"):
+    """Fig. of the main test result from the rolling-origin predictions for 2024 and 2025.
+
+    Same three panels as notebook 05's fixed-split figure: (a) precision-recall curves, (b)
+    reliability of the out-of-fold calibrated probabilities, (c) POD against the alert budget.
+    Each season has its own fit, so (a) averages the per-season curves (legend: mean per-season
+    PR-AUC) and (c) sets the budget within each season, as `E.seasonal_metrics` does; (b) pools the
+    calibrated probabilities. Also writes results/rolling-origin-reliability.csv.
+    """
+    import pandas as pd
+    from sklearn.metrics import average_precision_score, precision_recall_curve
+
+    from . import evaluate as E
+
+    pred = pd.read_parquet(C.PROCESSED / "rolling-origin-predictions.parquet")
+    te = pred[(pred["start"] == start) & pred["season"].isin([2024, 2025])]
+    y, clim, season = te["y"].to_numpy(), te["clim"].to_numpy(), te["season"].to_numpy()
+    recall = np.linspace(
+        0.005, 1, 200
+    )  # from 0.005: precision at recall 0 is a single-row artefact
+
+    def mean_pr(s):
+        """Precision on a recall grid averaged over seasons, and the mean per-season PR-AUC."""
+        curves, aps = [], []
+        for x in np.unique(season):
+            i = season == x
+            p, r, _ = precision_recall_curve(y[i], s[i])
+            curves.append(np.interp(recall, r[::-1], p[::-1]))
+            aps.append(average_precision_score(y[i], s[i]))
+        return np.mean(curves, axis=0), np.mean(aps)
+
+    def seasonal_pod(s, b):
+        alert = np.zeros(len(s), dtype=bool)
+        for x in np.unique(season):
+            i = np.flatnonzero(season == x)
+            alert[i] = E.budget_alerts(s[i], b)
+        return E.alert_metrics(y, s, alert=alert)["pod"]
+
+    models = ["lr", "rf", "hgb", "svm_linear", "svm_rbf"]
+    legend = {
+        "fontsize": 6.5,
+        "loc": "upper center",
+        "bbox_to_anchor": (0.5, -0.3),
+        "columnspacing": 1.0,
+        "handlelength": 1.6,
+    }
+    f, axes = fig(width=COL_W, height=7.6, nrows=3)
+    f.subplots_adjust(hspace=0.95)
+
+    ax = axes[0]
+    for m in ["climatology"] + models:
+        s = clim if m == "climatology" else te[f"score_{m}"].to_numpy()
+        p, ap = mean_pr(s)
+        ax.plot(
+            recall,
+            p,
+            color=MODEL_COL[m],
+            lw=1.5 if m == "lr" else 1.0,
+            label=f"{MODEL_NAME[m]} ({ap:.3f})",
+        )
+    p, ap = mean_pr(te["score_lr_B"].to_numpy())
+    ax.plot(
+        recall,
+        p,
+        color=MODEL_COL["lr"],
+        ls="--",
+        lw=1.0,
+        label=f"{MODEL_NAME['lr']}, set B ({ap:.3f})",
+    )
+    ax.axhline(y.mean(), color="k", lw=0.6, ls=":", label=f"Base rate ({y.mean():.3f})")
+    ax.set(xlabel="Recall (POD)", ylabel="Precision", xlim=(0, 1), ylim=(0, 0.5))
+    ax.legend(ncol=3, **legend)
+    letter(ax, "a")
+
+    ax = axes[1]
+    rows = []
+    for lab, col, color, ls, mk, mfc in (
+        (MODEL_NAME["lr"], "prob_lr", MODEL_COL["lr"], "-", "o", None),
+        (MODEL_NAME[best], f"prob_{best}", shade(MODEL_COL[best]), "--", "D", "white"),
+        ("Climatology", "clim", MODEL_COL["climatology"], "-", "s", None),
+    ):
+        t = E.reliability_table(y, te[col].to_numpy(), bins=10)
+        ax.plot(
+            t["predicted"], t["observed"], marker=mk, ms=3, mfc=mfc, color=color, ls=ls, label=lab
+        )
+        rows.append(t.assign(model=col.removeprefix("prob_")))
+    lim = 0.22
+    ax.plot([0, lim], [0, lim], color="k", lw=0.6, ls=":")
+    ax.set(
+        xlim=(0, lim), ylim=(0, lim), xlabel="Predicted probability", ylabel="Observed frequency"
+    )
+    ax.legend(ncol=3, **legend)
+    letter(ax, "b")
+
+    ax = axes[2]
+    budgets = np.linspace(0.01, 0.30, 30)
+    for m, col, ls in (
+        ("climatology", "clim", "-"),
+        (best, f"score_{best}", "-"),
+        ("lr", "score_lr", "-"),
+        ("lr", "score_lr_B", "--"),
+    ):
+        s = te[col].to_numpy()
+        lab = MODEL_NAME[m] + (", set B" if col.endswith("_B") else "")
+        pod = [seasonal_pod(s, b) for b in budgets]
+        ax.plot(100 * budgets, pod, color=MODEL_COL[m], ls=ls, label=lab)
+    ax.axvline(100 * C.ALERT_BUDGET, color="k", lw=0.6, ls=":")
+    ax.set(xlabel="Alert budget (% of district-days)", ylabel="Probability of detection")
+    ax.legend(ncol=2, **legend)
+    letter(ax, "c")
+    save(f, "fig-rolling-pr-reliability-budget")
+
+    rel = pd.concat(rows)
+    rel.round(4).to_csv(C.RESULTS / "rolling-origin-reliability.csv", index=False)
+    mean = {m: te[f"prob_{m}"].mean() for m in models + ["lr_B"]}
+    print("mean predicted probability:", {k: round(float(v), 4) for k, v in mean.items()})
+    print(f"observed {y.mean():.4f}, climatology {clim.mean():.4f}")
+
+
+if __name__ == "__main__":
+    import warnings
+
+    matplotlib.use("Agg")
+    warnings.filterwarnings("ignore", "FigureCanvasAgg is non-interactive")
+    setup()
+    rolling_pr_reliability_budget()

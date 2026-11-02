@@ -131,20 +131,21 @@ def entry_lag_days(inc):
     return (inc["created"].dt.normalize() - inc["date"]).dt.days.clip(lower=0)
 
 
-def harmonise_entry_lags(inc, seed=C.SEED):
+def harmonise_entry_lags(inc, seed=C.SEED, ref_seasons=C.LAG_REFERENCE_SEASONS):
     """Give pre-2020 incidents a synthetic entry date so `created` means the same thing in every season.
 
     From 2020 incidents are entered within about 1.5 days, so their real `createdOn` is kept. Before
     2020 they were entered in bulk years later, so `createdOn` says nothing about when the incident
     would have been known. Each pre-2020 incident is given a lag drawn (with a fixed seed) from the
     empirical lag distribution of the 2020 to 2025 incidents of the same hazard, and `created` is set
-    to incident day plus that lag. Adds a boolean `lag_synthetic` column.
+    to incident day plus that lag. Adds a boolean `lag_synthetic` column. `ref_seasons` can be
+    narrowed so a rolling origin draws lags from its own past only (src/rolling.py).
     """
     inc = inc.copy()
     rng = np.random.default_rng(seed)
     lag = entry_lag_days(inc)
     year = inc["date"].dt.year
-    ref = inc[year.isin(C.LAG_REFERENCE_SEASONS)]
+    ref = inc[year.isin(ref_seasons)]
     pre = year < C.PROMPT_ENTRY_FROM
     inc["lag_synthetic"] = pre
     for hazard, idx in inc[pre].groupby("hazard").groups.items():

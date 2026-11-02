@@ -160,3 +160,65 @@ the result files in this folder.
 - New table of rule baselines at their own alert rate; appendix now lists the clean-run times and the
   `src.checks` output, and comes before the Acknowledgment and References.
 - Belt label in the notebook 02 map changed to "ecological belt"; notebook 02 re-run (5 s).
+
+## 1 November 2026
+
+### Rolling-origin evaluation and training start (`src/rolling.py`)
+- Expanding window: 2024 scored by a model fitted up to 2023, 2025 up to 2024, the 2026 check up
+  to 2025; training starts in 2017 or 2020. Hyperparameters fixed at `best-params.csv`. Features
+  (rain percentiles, target encoding), synthetic pre-2020 lags (reference 2020 to origin-1) and
+  climatology are refitted per origin; isotonic calibration on leave-one-season-out scores of the
+  training seasons, each fold with its own rebuilt features. Run time 17.5 min.
+- Pooled 2024 to 2025 PR-AUC, start 2017: climatology 0.149, lr 0.180, hgb 0.180, svm_linear
+  0.180 (all three exclude zero against climatology), rf 0.168, svm_rbf 0.150; lr with set B 0.214.
+  Start 2020: climatology 0.150, hgb 0.188 (excludes zero), lr 0.177, rf 0.176, svm_linear 0.177
+  (lower ends about 0.000), svm_rbf 0.138. BSS is positive for every model under both starts.
+- 2026 check: climatology 0.102 under both starts (0.087 in the fixed split); no model's interval
+  excludes zero. Per season, 2025 skill over climatology is near zero for every model.
+- Outputs: `results/rolling-origin.csv`, `results/rolling-origin-per-season.csv`,
+  `data/processed/rolling-origin-predictions.parquet`. `src.checks`: all checks passed.
+
+### Paper switched to the expanding window (1 November 2026)
+- Main results, the per-season table, the 2026 check and the alert counts now come from the
+  rolling-origin run (start 2017). New tables from `src.tables`: `rolling-schedule`,
+  `rolling-main-results`, `rolling-main-results-ops`, `rolling-per-season`,
+  `rolling-budget-counts`; the fixed-split tables are still written but no longer all used.
+- Rule baselines against the rolling climatology: `uv run python -m src.rolling baselines` writes
+  `results/rolling-origin-baselines.csv` (persistence 0.101, Dahal and Hasegawa 0.091, refitted
+  ERA5 threshold 0.150, its cut refitted per origin; 30 s).
+- New figure `fig-rolling-pr-reliability-budget` (`uv run python -m src.plotting`) replaces the
+  fixed-split PR, reliability and budget figure in the paper; it also writes
+  `results/rolling-origin-reliability.csv`. Mean predicted probability 0.067 to 0.068 against an
+  observed 0.085.
+- Diagnostics stay on the fixed-split model (fitted 2017 to 2022, calibrated 2023): feature-set
+  ablations, rain-driven target, rule comparisons at own alert rate, region encodings, error
+  breakdowns, SHAP and permutation importance, case study, year-only control. The paper says so
+  once, in Stage 2 of the Methods.
+- Claims removed: all five models beat climatology in 2026, three significantly; BSS near zero with
+  the 2023 calibrator as a main result; the threshold fixed on 2023 scores. Leakage audit updated
+  with the per-origin refitting and the two leakage fixes.
+
+### Season-stratified rescoring of the expanding window (1 November 2026)
+- Why: peer review (`paper/peer-review-2026-11-01.md`, M2 and M5). 2024 and 2025 are scored by two
+  separate fits, so pooled PR-AUC ranked raw scores (SVM decision values among them) from two models
+  on one scale, and the week bootstrap ignored the season structure.
+- Choice (user, 1 November): PR-AUC and ROC-AUC over 2024 to 2025 are the mean of the per-season
+  values (paired difference = mean of per-season differences); the 5% budget is set within each
+  season and POD, FAR and CSI come from the combined alerts; Brier and BSS pool the calibrated
+  probabilities; weeks are resampled within each season, paired across models (1,000 resamples,
+  seed 42). `uv run python -m src.rolling score` rescores the saved predictions with no refitting;
+  the fixed-split path is unchanged (no `strata`).
+- Effect, start 2017: climatology 0.149 -> 0.151; LR 0.180 -> 0.177 (gain +0.032 [+0.006, +0.061]
+  -> +0.026 [+0.005, +0.049]); HGB 0.180 -> 0.179 (+0.027 [+0.004, +0.051]); SVM-L 0.180 -> 0.177
+  (+0.026 [+0.005, +0.049]); RF 0.168 -> 0.169 (+0.017 [-0.005, +0.041]); SVM-RBF 0.150 -> 0.152;
+  LR set B 0.214 -> 0.207. Still three of five significant. BSS 0.006 to 0.019 unchanged (pooled);
+  POD/FAR/CSI for LR unchanged (0.143, 0.757, 0.099), climatology 0.118, 0.800, 0.080.
+- Start 2020: significant gains move from HGB only to HGB (0.187, +0.034 [+0.008, +0.066]) and RF
+  (0.180, +0.028 [+0.001, +0.056]); LR 0.174 (+0.022 [-0.002, +0.050]).
+- Per-season and 2026 tables are unchanged (one season is one stratum, same resamples).
+- Rule baselines rescored the same way: persistence 0.102, Dahal and Hasegawa 0.091, refitted ERA5
+  threshold 0.149.
+- Paper: numbers updated; abstract and Conclusion now say "three of five gain about 0.026, lower
+  bounds near 0.005"; start-2020 sentence now says it changes which gains exclude zero; review fixes
+  M1, M3, M4, M6, M8, m1 to m6, m10, n1 to n3, n5 applied; n4 in the leakage audit.
+

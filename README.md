@@ -5,11 +5,13 @@ Machine Learning Approaches". For each of Nepal's 77 districts and each day from
 the project forecasts whether a damaging flood, landslide, heavy-rainfall or lightning incident (a
 death, missing person, injury or destroyed house) will be recorded in the next three days. Stage 1
 clusters the districts into risk regions (K-means, Ward, Gaussian mixture); Stage 2 compares
-logistic regression, random forest, gradient boosting and support vector machines, tested once on
-the 2024 and 2025 seasons. Headline result: district-by-month climatology scores 0.143 PR-AUC and
-the best models reach 0.177 (95% interval 0.141 to 0.216); a perfect three-day rain forecast would
-lift this to 0.21 to 0.22, more than any change of model, and the risk regions add nothing beyond
-district history.
+logistic regression, random forest, gradient boosting and support vector machines. The main test
+uses an expanding window: each of the 2024 and 2025 seasons, and a 2026 check, is scored by models
+refitted on all earlier seasons from 2017. Headline result: district-by-month climatology scores
+0.151 in mean per-season PR-AUC; logistic regression, gradient boosting and the linear SVM gain
+about 0.026 (lower bounds near 0.005), all of it in 2024, and no model clearly beats climatology in
+2025 or the 2026 check. A perfect three-day rain forecast raises PR-AUC to about 0.21, and the risk
+regions add nothing to a pooled model.
 
 Author: Bhimraj Yadav, ST7072CEM Machine Learning, Softwarica College / Coventry University.
 
@@ -50,8 +52,20 @@ Author: Bhimraj Yadav, ST7072CEM Machine Learning, Softwarica College / Coventry
    | `01-data-preparation` | Builds the district-day panel and the feature matrix | under 1 min |
    | `02-exploratory-analysis` | Seasonality, trends, district maps, class balance | about 20 s |
    | `03-clustering-risk-regions` | Stage 1: risk regions by clustering | about 10 s |
-   | `04-classification` | Stage 2: tuning, calibration, test scores, ablations | about 16 min |
+   | `04-classification` | Stage 2 on the fixed split: tuning, calibration, ablations, 2026 check | about 16 min |
    | `05-evaluation-and-interpretation` | Curves, errors, SHAP, case study, sensitivity checks | 10 to 25 min |
+
+5. Run the expanding-window evaluation that produces the main results (refits every model at each
+   origin; about 18 minutes), then the rule baselines and the main-result figure:
+
+   ```bash
+   uv run python -m src.rolling
+   uv run python -m src.rolling baselines
+   uv run python -m src.plotting
+   ```
+
+   `uv run python -m src.rolling score` recomputes the result tables from the saved predictions
+   without refitting.
 
    Times are from an Apple M4 laptop. Metric tables go to `results/`, figures to `paper/figures/`
    and intermediate data to `data/processed/`. Every random step uses `SEED = 42` in
@@ -77,13 +91,14 @@ st7072cem-ml-assignment/
     experiments.py     fit, calibrate and summarise one experiment (notebook 04)
     evaluate.py        baselines, metrics, weekly block bootstrap
     sensitivity.py     sensitivity checks from the saved predictions (notebook 05)
+    rolling.py         expanding-window evaluation (main results) and rule baselines
     plotting.py        figure style and map helpers
     tables.py          writes paper/tables/*.tex from results/*.csv
   notebooks/           01 to 05, run in order; saved with their outputs
   data/
     raw/               frozen inputs: BIPAD snapshot and geography, ward elevations, boundaries
     weather/           ERA5 daily weather at the 77 district centroids, 2016 to 2026
-    processed/         panel, feature matrix, regions, predictions (built by the notebooks)
+    processed/         panel, feature matrix, regions, predictions (built by the notebooks and src.rolling)
   results/             metric tables (CSV), leakage audit, run evidence, lab log
   paper/               IEEE paper: main.tex, references.bib, figures/, tables/, main.pdf
   pyproject.toml       project settings and pinned dependencies

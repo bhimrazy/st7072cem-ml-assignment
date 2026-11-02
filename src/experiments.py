@@ -84,13 +84,18 @@ def run(data, name, params, cols, target="y", seed=C.SEED):
     return out
 
 
-def summarise(named, y, clim, dates, n_boot=1000, seed=C.SEED):
+def summarise(named, y, clim, dates, n_boot=1000, seed=C.SEED, strata=None):
     """Point metrics for every (score, prob) pair plus bootstrap intervals for PR-AUC, BSS and CSI.
 
     The first entry of `named` is the reference for the paired differences (use climatology).
+    `strata` (the season of each row) switches to per-season scoring, as in `E.block_bootstrap`.
     """
-    point = pd.DataFrame({k: E.metrics(y, s, clim, p) for k, (s, p) in named.items()}).T
-    boot = E.block_bootstrap(y, named, clim, dates, n_boot=n_boot, seed=seed)
+    if strata is None:
+        point = {k: E.metrics(y, s, clim, p) for k, (s, p) in named.items()}
+    else:
+        point = {k: E.seasonal_metrics(y, s, clim, p, strata) for k, (s, p) in named.items()}
+    point = pd.DataFrame(point).T
+    boot = E.block_bootstrap(y, named, clim, dates, n_boot=n_boot, seed=seed, strata=strata)
     wide = boot.pivot(
         index="model", columns="metric", values=["lo", "hi", "diff_vs_ref", "diff_lo", "diff_hi"]
     )
