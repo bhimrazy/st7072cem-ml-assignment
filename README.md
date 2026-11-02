@@ -99,7 +99,7 @@ st7072cem-ml-assignment/
     raw/               frozen inputs: BIPAD snapshot and geography, ward elevations, boundaries
     weather/           ERA5 daily weather at the 77 district centroids, 2016 to 2026
     processed/         panel, feature matrix, regions, predictions (built by the notebooks and src.rolling)
-  results/             metric tables (CSV), leakage audit, run evidence, lab log
+  results/             metric tables (CSV), leakage audit, run evidence
   paper/               IEEE paper: main.tex, references.bib, figures/, tables/, main.pdf
   pyproject.toml       project settings and pinned dependencies
   uv.lock              exact versions for uv

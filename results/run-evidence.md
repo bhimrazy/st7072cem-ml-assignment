@@ -89,7 +89,7 @@ The per-season, 2026 check and training-start-2020 results are in `results/rolli
 
 ## Outputs produced
 
-- `results/*.csv`: all metric tables; `results/leakage-audit.md`; `results/progress-log.md`.
+- `results/*.csv`: all metric tables; `results/leakage-audit.md`.
 - `paper/figures/*.pdf` and `*.png`; `paper/tables/*.tex` (from `src.tables`).
 - `data/processed/feature-matrix.parquet`, `district-regions.csv`, `predictions.parquet`,
   `rolling-origin-predictions.parquet`, `models/stage2-models.joblib`.
