@@ -141,16 +141,6 @@ pdflatex main && bibtex main && pdflatex main && pdflatex main
 This needs a LaTeX distribution with the `IEEEtran` class (TeX Live, MacTeX or TinyTeX). Without
 one, upload the `paper/` folder to [Overleaf](https://www.overleaf.com/) and compile with pdfLaTeX.
 
-## Making the submission zip
-
-```bash
-git archive --format=zip -o Bhimraj_Yadav_17624402_Code.zip HEAD
-```
-
-The zip holds exactly the files tracked in git at the current commit, so it never picks up the
-virtual environment, caches, LaTeX build files or the trained models. Commit any changes first.
-Add `--prefix=st7072cem-ml-assignment/` to put everything inside one top-level folder.
-
 ## Troubleshooting
 
 - **`uv: command not found`.** Open a new terminal after installing uv so the updated `PATH` is

@@ -1,6 +1,6 @@
 # Leakage audit
 
-Written after the feature matrix was frozen (`uv run python -m src.freeze`, 10 October 2026).
+Written after the feature matrix was frozen (`uv run python -m src.freeze`).
 The automated checks in `src/checks.py` are run with `uv run python -m src.checks`; their output
 is in `results/checks-output.txt`.
 
@@ -17,7 +17,7 @@ is in `results/checks-output.txt`.
 | 7 | District x month history rates (target encoding) are fitted on training seasons; training rows get a leave-one-season-out encoding so a row never sees its own season's outcomes | `apply_target_encoding_loso` | `test_target_encoding_leave_one_season_out` |
 | 8 | The persistence baseline uses incidents known at t (`recent_dam_3d > 0`), not the same-day flag | `evaluate.persistence_score` | `test_persistence_known_at_t` |
 | 9 | Clustering profiles (notebook 03) use 2017 to 2022 same-day rates only; the region encodings are fitted once and then attached to every row | `src/regions.py` | inspection |
-| 10 | Model tuning uses leave-one-season-out folds inside 2017 to 2022, and the chosen settings are not retuned per origin. In the expanding window the isotonic calibrator is fitted on leave-one-season-out scores within the origin's training seasons; in the fixed split, calibration uses 2023. 2024 to 2025 is scored once per design. The 5% alert budget is a share of the scored test rows themselves (`evaluate.alert_metrics`), not a threshold carried over from 2023; a threshold fixed on 2023 scores is reported separately as a sensitivity (`results/alert-threshold-2023.csv`). Under the expanding window (from 1 November 2026) each season is scored by its own fit, so the budget is set within each season, PR-AUC and ROC-AUC over 2024 to 2025 are means of the per-season values, and the week-block bootstrap resamples within each season (`evaluate.seasonal_metrics`, `block_bootstrap(strata=...)`) | `src/models.py`, `src/evaluate.py`, notebooks 04 and 05 | inspection |
+| 10 | Model tuning uses leave-one-season-out folds inside 2017 to 2022, and the chosen settings are not retuned per origin. In the expanding window the isotonic calibrator is fitted on leave-one-season-out scores within the origin's training seasons; in the fixed split, calibration uses 2023. 2024 to 2025 is scored once per design. The 5% alert budget is a share of the scored test rows themselves (`evaluate.alert_metrics`), not a threshold carried over from 2023; a threshold fixed on 2023 scores is reported separately as a sensitivity (`results/alert-threshold-2023.csv`). Under the expanding window each season is scored by its own fit, so the budget is set within each season, PR-AUC and ROC-AUC over 2024 to 2025 are means of the per-season values, and the week-block bootstrap resamples within each season (`evaluate.seasonal_metrics`, `block_bootstrap(strata=...)`) | `src/models.py`, `src/evaluate.py`, notebooks 04 and 05 | inspection |
 | 11 | The 2026 check ends its target window on 19 August 2026, 31 days before the snapshot | `src/config.py` | `check_panel` |
 | 12 | The year itself is never a feature. The year-only control (season and month, no district term) sits below climatology by construction, so it only shows that year alone does not rank district-days; the stronger check adds year to a district-history control (shrunk district x month rate and month), which moves test PR-AUC from 0.136 to 0.138 | notebooks 04 and 05 | `results/test-baselines.csv`, `results/year-control-history.csv` |
 | 13 | Every data-fitted quantity is refitted per origin of the expanding window on that origin's training seasons only: rain percentiles, district x month history rates (features rebuilt), the synthetic pre-2020 entry lags, climatology, the refitted ERA5 threshold and the calibrator. Before refitting, the per-origin build path is asserted to reproduce the frozen feature matrix for the fixed split | `src/rolling.py` (`run_origin`, `rule_baselines`, `check_build_path`) | `check_build_path` assertion |
@@ -32,7 +32,7 @@ is in `results/checks-output.txt`.
 - Known-at-t counts use entry dates as they stand in the 19 September 2026 snapshot; incidents deleted or re-dated before the snapshot are invisible to the entry-lag check.
 - Reporting bias in BIPAD is not leakage but shapes the label (see the Discussion).
 
-## Expanding-window evaluation (1 November 2026)
+## Expanding-window evaluation
 
 The paper's main results now come from `src/rolling.py`: each scored season (2024, 2025, the 2026
 check) is predicted by models fitted on every season before it, starting in 2017 (2020 as a
