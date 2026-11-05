@@ -104,7 +104,7 @@ st7072cem-ml-assignment/
   data/
     raw/               frozen inputs: BIPAD snapshot and geography, ward elevations, boundaries
     weather/           ERA5 daily weather at the 77 district centroids, 2016 to 2026
-    processed/         panel, feature matrix, regions, predictions (built by the notebooks and src.rolling)
+    processed/         panel, feature matrix, regions, predictions (included; rebuilt by the notebooks and src.rolling)
   results/             metric tables (CSV), leakage audit, run evidence
   paper/               IEEE paper: main.tex, references.bib, figures/, tables/, main.pdf
   presentation/        slide deck (slides.pdf) and its animated preview
