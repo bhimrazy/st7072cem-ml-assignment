@@ -361,7 +361,7 @@ This study built a district-day harm dataset for Nepal's four main monsoon hazar
 \section{Run Evidence}
 \label{app:run}
 \subsection*{Code and Data Availability}
-The code is available at \codeurl{}. The frozen inputs (BIPAD snapshot of 19 September 2026, the frozen BIPAD geography, the ERA5 archive and the terrain and boundary files) are included with their \path{.meta.json} provenance, so the commands below run offline.
+The code is available at \codeurl{}, with a \href{https://youtu.be/Js4m7qHRn3s}{video walkthrough}. The frozen inputs (BIPAD snapshot of 19 September 2026, the frozen BIPAD geography, the ERA5 archive and the terrain and boundary files) are included with their \path{.meta.json} provenance, so the commands below run offline.
 
 \subsection{Reproducing the Results}
 From a clone of the repository, the commands below install the locked environment, rebuild the panel and feature matrix, run the checks, execute notebooks 01 to 05 in order, run the expanding-window evaluation and regenerate the main-result figure and the tables. Notebooks 04 and 05 train and analyse the fixed-split model of the diagnostic analyses; notebook 04 saves the models that notebook 05 reads, since trained models are not shipped. The notebooks take about 27 minutes on the M4 laptop (Table~\ref{tab:runtimes}) and \path{src.rolling} about 18 minutes; Fig.~\ref{fig:notebook} shows the main-result cell of the executed notebook 04.
