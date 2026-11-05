@@ -15,6 +15,12 @@ regions add nothing to a pooled model.
 
 Author: Bhimraj Yadav, ST7072CEM Machine Learning, Softwarica College / Coventry University.
 
+## Presentation
+
+[![Slide preview](presentation/slides-preview.gif)](presentation/slides.pdf)
+
+The full slide deck is in [presentation/slides.pdf](presentation/slides.pdf); GitHub's viewer pages through it slide by slide.
+
 ## Quick start
 
 1. Install [uv](https://docs.astral.sh/uv/), which installs Python 3.12 and every package for you:
@@ -101,6 +107,7 @@ st7072cem-ml-assignment/
     processed/         panel, feature matrix, regions, predictions (built by the notebooks and src.rolling)
   results/             metric tables (CSV), leakage audit, run evidence
   paper/               IEEE paper: main.tex, references.bib, figures/, tables/, main.pdf
+  presentation/        slide deck (slides.pdf) and its animated preview
   pyproject.toml       project settings and pinned dependencies
   uv.lock              exact versions for uv
   requirements.txt     the same versions for pip
